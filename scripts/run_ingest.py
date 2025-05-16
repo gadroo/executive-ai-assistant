@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from typing import Optional
 from eaia.gmail import fetch_group_emails
-from eaia.main.config import get_config
+from eaia.main.config import get_config_async
 from langgraph_sdk import get_client
 import httpx
 import uuid
@@ -19,7 +19,8 @@ async def main(
     email: Optional[str] = None,
 ):
     if email is None:
-        email_address = get_config({"configurable": {}})["email"]
+        config = await get_config_async({"configurable": {}})
+        email_address = config["email"]
     else:
         email_address = email
     if url is None:

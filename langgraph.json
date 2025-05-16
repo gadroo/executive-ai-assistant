@@ -11,8 +11,8 @@
   },
   "store": {
     "index": {
-      "embed": "openai:text-embedding-3-small",
-      "dims": 1536
+      "embed": "cohere:embed-english-v3.0",
+      "dims": 1024
     }
   }
 }

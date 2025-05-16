@@ -16,7 +16,7 @@ from email.mime.text import MIMEText
 import email.utils
 
 from langchain_core.tools import tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from eaia.schemas import EmailData
 
@@ -417,3 +417,42 @@ def send_calendar_invite(
     except Exception as e:
         logger.info(f"An error occurred while sending the calendar invite: {e}")
         return False
+
+
+def create_draft(
+    to,
+    subject,
+    message_text,
+    gmail_token: str | None = None,
+    gmail_secret: str | None = None,
+):
+    """
+    Creates a draft email in Gmail without sending it.
+    
+    Args:
+        to: List of recipient email addresses
+        subject: The subject line of the email
+        message_text: The body of the email
+        gmail_token: Optional Gmail API token
+        gmail_secret: Optional Gmail API secret
+    
+    Returns:
+        A dictionary with the draft ID and message ID
+    """
+    creds = get_credentials(gmail_token, gmail_secret)
+    
+    service = build("gmail", "v1", credentials=creds)
+    
+    message = MIMEMultipart()
+    message["to"] = ", ".join(to)
+    message["subject"] = subject
+    message["Message-ID"] = email.utils.make_msgid()
+    msg = MIMEText(message_text)
+    message.attach(msg)
+    raw = base64.urlsafe_b64encode(message.as_bytes())
+    raw = raw.decode()
+    
+    create_message = {"message": {"raw": raw}}
+    
+    draft = service.users().drafts().create(userId="me", body=create_message).execute()
+    return draft

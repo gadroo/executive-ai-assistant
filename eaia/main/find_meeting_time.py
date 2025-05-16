@@ -4,13 +4,13 @@ from datetime import datetime
 
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langgraph.prebuilt import create_react_agent
 
 from eaia.gmail import get_events_for_days
 from eaia.schemas import State
 
-from eaia.main.config import get_config
+from eaia.main.config import get_config_async
 
 meeting_prompts = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
 
@@ -39,19 +39,29 @@ NOT
 
 Do not send time slots less than 15 minutes in length.
 
-Your response should be extremely high density. You should not respond directly to the email, but rather just say factually whether {name} is free, and what time slots. Do not give any extra commentary. Examples of good responses include:
+Your response should be extremely high density. You should not respond directly to the email, but rather just say factually whether {name} is free, and what time slots. Do not give any extra commentary. 
 
-<examples>
+EXAMPLES:
 
-Example 1:
+Example 1 - Checking Specific Times:
+Email: "Hi {name}, I'd like to discuss our AI project. Are you available this Thursday at 2pm?"
+Tool call: [Check calendar for Thursday at 2pm]
+Response: "{name} is free Thursday at 2pm."
 
-> {name} is free 9:30-10
+Example 2 - Finding Available Times:
+Email: "Hello {name}, I'd like to meet sometime next week to discuss research collaboration. What's your availability?"
+Tool call: [Check calendar for next week]
+Response: "{name} is free Monday 11am-1pm, Tuesday 4pm-5:30pm, and Friday 9am-10:30am."
 
-Example 2:
+Example 3 - Respecting Preferences:
+Email: "Hi {name}, I need to schedule a meeting with you. I prefer mornings, ideally before 11am."
+Tool call: [Check calendar for morning slots]
+Response: "{name} is free tomorrow 9:30am-11am and Friday 8am-10am."
 
-> {name} is not free then. But he is free at 10:30
-
-</examples>
+Example 4 - Handling Unavailability:
+Email: "Can we meet tomorrow at 3pm to discuss the project?"
+Tool call: [Check calendar for tomorrow at 3pm]
+Response: "{name} is not free tomorrow at 3pm. But he is free tomorrow at 4:30pm-6pm."
 
 The current data is {current_date}
 
@@ -65,11 +75,11 @@ Subject: {subject}
 
 async def find_meeting_time(state: State, config: RunnableConfig):
     """Write an email to a customer."""
-    model = config["configurable"].get("model", "gpt-4o")
-    llm = ChatOpenAI(model=model, temperature=0)
+    model = config["configurable"].get("model", "claude-3-5-sonnet-latest")
+    llm = ChatAnthropic(model=model, temperature=0)
     agent = create_react_agent(llm, [get_events_for_days])
     current_date = datetime.now()
-    prompt_config = get_config(config)
+    prompt_config = await get_config_async(config)
     input_message = meeting_prompts.format(
         email_thread=state["email"]["page_content"],
         author=state["email"]["from_email"],

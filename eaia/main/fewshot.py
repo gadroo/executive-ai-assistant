@@ -15,6 +15,9 @@ Email Content:
 
 
 def format_similar_examples_store(examples):
+    if not examples:
+        return ""
+        
     strs = ["Here are some previous examples:"]
     for eg in examples:
         strs.append(
@@ -34,7 +37,12 @@ async def get_few_shot_examples(email: EmailData, store: BaseStore, config):
         config["configurable"].get("assistant_id", "default"),
         "triage_examples",
     )
-    result = await store.asearch(namespace, query=str({"input": email}), limit=5)
-    if result is None:
+    
+    try:
+        result = await store.asearch(namespace, query=str({"input": email}), limit=5)
+        if result is None:
+            return ""
+        return format_similar_examples_store(result)
+    except Exception as e:
+        print(f"Error fetching few-shot examples: {e}")
         return ""
-    return format_similar_examples_store(result)

@@ -1,5 +1,4 @@
 from langgraph.store.base import BaseStore
-from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from typing import TypedDict, Optional
 from langgraph.graph import StateGraph, START, END, MessagesState
@@ -31,39 +30,33 @@ class GeneralResponse(TypedDict):
     new_prompt: str
 
 
-general_reflection_prompt = """You are helping an AI agent improve. You can do this by changing their system prompt.
+general_reflection_prompt = """Help improve an AI agent by updating its system prompt.
 
-These is their current prompt:
+Current prompt:
 <current_prompt>
 {current_prompt}
 </current_prompt>
 
-Here was the agent's trajectory:
+Agent trajectory:
 <trajectory>
 {trajectory}
 </trajectory>
 
-Here is the user's feedback:
-
+User feedback:
 <feedback>
 {feedback}
 </feedback>
 
-Here are instructions for updating the agent's prompt:
-
+Instructions:
 <instructions>
 {instructions}
 </instructions>
 
-
-Based on this, return an updated prompt
-
-You should return the full prompt, so if there's anything from before that you want to include, make sure to do that. Feel free to override or change anything that seems irrelevant. You do not need to update the prompt - if you don't want to, just return `update_prompt = False` and an empty string for new prompt."""
+Return the full updated prompt. Include anything from before that should be kept. You can change or remove irrelevant parts. If no updates needed, return `update_prompt = False` and an empty string for new prompt."""
 
 
 async def update_general(state: ReflectionState, config, store: BaseStore):
-    reflection_model = ChatOpenAI(model="o1", disable_streaming=True)
-    # reflection_model = ChatAnthropic(model="claude-3-5-sonnet-latest")
+    reflection_model = ChatAnthropic(model="claude-3-5-sonnet-latest")
     namespace = (state["assistant_key"],)
     key = state["prompt_key"]
     result = await store.aget(namespace, key)
@@ -119,26 +112,24 @@ MEMORY_TO_UPDATE_INSTRUCTIONS = {
     "calendar": SCHEDULE_INSTRUCTIONS,
 }
 
-CHOOSE_MEMORY_PROMPT = """You are helping an AI agent improve. You can do this by changing prompts.
+CHOOSE_MEMORY_PROMPT = """Choose which prompts to update based on user feedback.
 
-Here was the agent's trajectory:
+Agent trajectory:
 <trajectory>
 {trajectory}
 </trajectory>
 
-Here is the user's feedback:
-
+User feedback:
 <feedback>
 {feedback}
 </feedback>
 
-These are the different types of prompts that you can update in order to change their behavior:
-
+Available prompt types:
 <types_of_prompts>
 {types_of_prompts}
 </types_of_prompts>
 
-Please choose the types of prompts that are worth updating based on this trajectory + feedback. Only do this if the feedback seems like it has info relevant to the prompt. You will update the prompts themselves in a separate step. You do not have to update any memory types if you don't want to! Just leave it empty."""
+Select prompt types worth updating. Only choose if feedback contains relevant information. Leave empty if no updates needed."""
 
 
 class MultiMemoryInput(MessagesState):
@@ -148,7 +139,6 @@ class MultiMemoryInput(MessagesState):
 
 
 async def determine_what_to_update(state: MultiMemoryInput):
-    reflection_model = ChatOpenAI(model="gpt-4o", disable_streaming=True)
     reflection_model = ChatAnthropic(model="claude-3-5-sonnet-latest")
     trajectory = get_trajectory_clean(state["messages"])
     types_of_prompts = "\n".join(
@@ -188,3 +178,102 @@ multi_reflection_graph.add_node(determine_what_to_update)
 multi_reflection_graph.add_node("reflection", call_reflection)
 multi_reflection_graph.add_edge(START, "determine_what_to_update")
 multi_reflection_graph = multi_reflection_graph.compile()
+
+EMAIL_WRITING_INSTRUCTIONS = """As {name}'s email assistant: Help maintain their reputation as a capable final-year student balancing academics, career, and social connections.
+
+{background}
+
+# Question tool
+Get required info before drafting. Never use placeholders. Ask {name} directly about:
+- Job/internship details
+- Event availability
+- Interest in opportunities
+- Academic status
+- Current commitments
+- Sender relationships
+Never accept commitments without approval. Use MeetingAssistant for availability.
+
+# ResponseEmailDraft tool
+Write as {name}. Adapt tone:
+- Academic: Professional, precise, engaged
+- Professional: Confident, achievement-oriented
+- Networking: Appreciative, purposeful
+- Administrative: Clear, procedural
+- Collaborative: Reliable, contributive
+- Social: Personable, authentic
+
+Strategies:
+1. Academic: Honest, solution-oriented, specific
+2. Career: Skills-focused, company-aware, concrete
+3. Networking: Concise, genuine, action-oriented
+4. Administrative: Procedure-aware, detailed
+
+{response_preferences}
+
+# SendCalendarInvite tool
+Schedule only when certain and calendar is free. Priorities:
+1. Job interviews/career
+2. Academic requirements
+3. Networking
+4. Project coordination
+5. Academic advising
+6. Organizational duties
+7. Social events
+
+Guidelines:
+- Interviews: Include prep buffer
+- Academic: Align with office hours
+- Social: Evenings/weekends
+- Projects: Include pre-deadline buffer
+
+{schedule_preferences}
+
+# NewEmailDraft tool
+For initiating conversations about:
+- Job/internship follow-ups
+- Networking
+- References
+- Opportunities
+- Introductions
+- Research
+- Academic clarifications
+- Resources
+- Event coordination
+
+Include: Subject, greeting, purpose, requests, closing, signature
+
+# MeetingAssistant tool
+ONLY use with EXPLICIT approval or confirmed meeting requests. Default to text first.
+
+Common meetings:
+- Interviews
+- Career discussions
+- Academic advising
+- Project coordination
+- Networking
+- Organizational duties
+
+# Context
+{name}'s priorities:
+1. Post-graduation employment
+2. Academic excellence
+3. Professional networking
+4. Campus involvement
+5. Graduation requirements
+
+Project: Competence, professionalism, academic engagement, organization, authenticity
+
+{random_preferences}"""
+
+draft_prompt = """{instructions}
+
+Respond with JSON for one tool:
+1. Question: {{"name": "Question", "arguments": {{"content": "question"}}}}
+2. ResponseEmailDraft: {{"name": "ResponseEmailDraft", "arguments": {{"content": "email", "new_recipients": []}}}}
+3. NewEmailDraft: {{"name": "NewEmailDraft", "arguments": {{"content": "email", "recipients": []}}}}
+4. MeetingAssistant: {{"name": "MeetingAssistant", "arguments": {{"call": true}}}}
+5. SendCalendarInvite: {{"name": "SendCalendarInvite", "arguments": {{"emails": [], "title": "title", "start_time": "time", "end_time": "time"}}}}
+6. Ignore: {{"name": "Ignore", "arguments": {{"ignore": true}}}}
+
+Email thread:
+{email}"""

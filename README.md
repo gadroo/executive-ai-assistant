@@ -30,20 +30,19 @@ Table of contents
 
 ### Set up credentials
 
-1. Export OpenAI API key (`export OPENAI_API_KEY=...`)
-2. Export Anthropic API key (`export ANTHROPIC_API_KEY=...`)
-3. Enable Google
+1. Export Anthropic API key (`export ANTHROPIC_API_KEY=...`)
+2. Enable Google
    1. [Enable the API](https://developers.google.com/gmail/api/quickstart/python#enable_the_api)
       - Enable Gmail API if not already by clicking the blue button `Enable the API`
    2. [Authorize credentials for a desktop application](https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application)
   
 > Note: If you're using a personal email (non-Google Workspace), select "External" as the User Type in the OAuth consent screen. With "External" selected, you must add your email as a test user in the Google Cloud Console under "OAuth consent screen" > "Test users" to avoid the "App has not completed verification" error. The "Internal" option only works for Google Workspace accounts.
 
-4. Download the client secret. After that, run these commands:
-5. `mkdir eaia/.secrets` - This will create a folder for secrets
-6. `mv ${PATH-TO-CLIENT-SECRET.JSON} eaia/.secrets/secrets.json` - This will move the client secret you just created to that secrets folder
-7. `python scripts/setup_gmail.py` - This will generate another file at `eaia/.secrets/token.json` for accessing Google services.
-8. Export LangSmith API key (`export LANGSMITH_API_KEY`)
+3. Download the client secret. After that, run these commands:
+4. `mkdir eaia/.secrets` - This will create a folder for secrets
+5. `mv ${PATH-TO-CLIENT-SECRET.JSON} eaia/.secrets/secrets.json` - This will move the client secret you just created to that secrets folder
+6. `python scripts/setup_gmail.py` - This will generate another file at `eaia/.secrets/token.json` for accessing Google services.
+7. Export LangSmith API key (`export LANGSMITH_API_KEY`)
 
 ### Configuration
 
@@ -117,10 +116,9 @@ If desired, you can always run EAIA in a self-hosted manner using LangGraph Plat
 4. Connect it to your GitHub repo containing this code.
 5. Give it a name like `Executive-AI-Assistant`
 6. Add the following environment variables
-   1. `OPENAI_API_KEY`
-   2. `ANTHROPIC_API_KEY`
-   3. `GMAIL_SECRET` - This is the value in `eaia/.secrets/secrets.json`
-   4. `GMAIL_TOKEN` - This is the value in `eaia/.secrets/token.json`
+   1. `ANTHROPIC_API_KEY`
+   2. `GMAIL_SECRET` - This is the value in `eaia/.secrets/secrets.json`
+   3. `GMAIL_TOKEN` - This is the value in `eaia/.secrets/token.json`
 7. Click `Submit` and watch your EAIA deploy
 
 ### Ingest manually

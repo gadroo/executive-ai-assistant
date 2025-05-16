@@ -1,6 +1,6 @@
-Since this powers Harrison's real email assistant, only contributions that improve that experience for Harrison will be merged in.
+Since this powers Aryan's real email assistant, only contributions that improve that experience for Aryan will be merged in.
 
-Harrison is very supportive of variants of this email assistant popping up. Add in other LLMs - great! Add in other email providers - great!
+Aryan is very supportive of variants of this email assistant popping up. Add in other LLMs - great! Add in other email providers - great!
 
 He just doesn't want to maintain them as he's already very busy.
 

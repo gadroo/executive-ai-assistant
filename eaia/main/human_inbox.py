@@ -8,7 +8,7 @@ from langgraph.types import interrupt
 from langgraph.store.base import BaseStore
 from typing import TypedDict, Literal, Union, Optional
 from langgraph_sdk import get_client
-from eaia.main.config import get_config
+from eaia.main.config import get_config_async
 
 LGC = get_client()
 
@@ -72,7 +72,7 @@ async def save_email(state: State, config, store: BaseStore, status: str):
 
 @traceable
 async def send_message(state: State, config, store):
-    prompt_config = get_config(config)
+    prompt_config = await get_config_async(config)
     memory = prompt_config["memory"]
     user = prompt_config['name']
     tool_call = state["messages"][-1].tool_calls[0]
@@ -138,7 +138,7 @@ async def send_message(state: State, config, store):
 
 @traceable
 async def send_email_draft(state: State, config, store):
-    prompt_config = get_config(config)
+    prompt_config = await get_config_async(config)
     memory = prompt_config["memory"]
     user = prompt_config['name']
     tool_call = state["messages"][-1].tool_calls[0]
@@ -239,7 +239,7 @@ async def send_email_draft(state: State, config, store):
 
 @traceable
 async def notify(state: State, config, store):
-    prompt_config = get_config(config)
+    prompt_config = await get_config_async(config)
     memory = prompt_config["memory"]
     user = prompt_config['name']
     request: HumanInterrupt = {
@@ -299,7 +299,7 @@ async def notify(state: State, config, store):
 
 @traceable
 async def send_cal_invite(state: State, config, store):
-    prompt_config = get_config(config)
+    prompt_config = await get_config_async(config)
     memory = prompt_config["memory"]
     user = prompt_config['name']
     tool_call = state["messages"][-1].tool_calls[0]
